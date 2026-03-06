@@ -116,11 +116,9 @@ def audit_node(state: GraphState):
     retries = state.get("retries", 0)
     
     try:
-        # Cleaning answer if have markdown.
         clean_json = generation.replace("```json", "").replace("```", "").strip()
         parsed_data = json.loads(clean_json)
         
-        # Integrity check
         required_keys = {"answer", "source_page", "confidence_score"}
         if not required_keys.issubset(parsed_data.keys()):
             raise ValueError(f"Missing required fields. Output must contain: {required_keys}")
@@ -132,7 +130,6 @@ def audit_node(state: GraphState):
         print(f"Audit: FAIL - {str(e)}")
         return {"error": str(e), "retries": retries + 1}
 
-# 4. CONDITIONAL EDGE (LUỒNG ĐIỀU KIỆN)
 def route_audit(state: GraphState):
     """Quyết định kết thúc hay yêu cầu LLM thử lại."""
     error = state.get("error")
