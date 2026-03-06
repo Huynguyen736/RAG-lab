@@ -181,6 +181,18 @@ async def chat(user_id: str, message: str):
         "response": json.loads(result.get("generation", "{}"))
     }
 
+@api.get("/chat")
+async def chat(user_id: str, message: str):
+    result = app_graph.invoke(
+        {"query": message, "retries": 0}, 
+        config={"configurable": {"thread_id": user_id}}
+    )
+    
+    return {
+        "user_id": user_id,
+        "response": json.loads(result.get("generation", "{}"))
+    }
+
 @api.get("/")
 async def root():
     return {"message": "Server is running!"}

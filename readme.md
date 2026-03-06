@@ -27,7 +27,7 @@ Xây dựng một chu trình Self-Correction (Tự sửa lỗi). Nếu AI tạo 
 # Cách sử dụng
 1. Cài đặt thư viện (cmd -> pip install -r requirements.txt)
 2. Tạo file .env chứa API Key (GEMINI_API_KEY=your_gemini_api_key_here)
-3. Sử dụng Uvicorn để chạy API local (uvicorn main:api --host 0.0.0.0 --port 8000)
+3. Sử dụng Uvicorn để chạy API local (uvicorn main:api --host 127.0.0.1 --port 8000)
 4. Gọi API qua cURL hoặc Postman
     - Endpoint: POST /chat?user_id=123&message=Quy định về thai sản là gì?
     - Kết quả trả về luôn ở dạng:
