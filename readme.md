@@ -41,3 +41,5 @@ Xây dựng một chu trình Self-Correction (Tự sửa lỗi). Nếu AI tạo 
 }
 5. Triển khai Cloud
 Dự án đã được cấu hình sẵn để chạy trên AWS Lambda thông qua Mangum. Cơ chế sao chép DB từ /var/task sang /tmp giúp vượt qua rào cản "Read-only file system" thường gặp trên môi trường Serverless.
+6. Sử dụng UI web (optional)
+Sau khi triển khai backend lên cloud thì có thể thay url của api (biến LAMBDA_URL) trong index.html
