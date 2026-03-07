@@ -23,7 +23,7 @@
             </div>
             <div>
                 <h1 class="font-bold text-slate-800 leading-none">Policy Auditor</h1>
-                <small class="text-slate-500" id="display-user-id">ID: Loading...</small>
+                <small class="text-slate-500" id="display-user-id">AI assiststant for company policies</small>
             </div>
         </div>
         <button onclick="resetChat()" class="text-slate-500 hover:text-red-500 transition-colors flex items-center gap-2 text-sm font-medium">
@@ -34,7 +34,7 @@
     <div id="chat-box" class="chat-container max-w-4xl mx-auto p-4 overflow-y-auto space-y-4">
         <div class="flex justify-start message-appear">
             <div class="bg-white border p-4 rounded-2xl rounded-tl-none shadow-sm max-w-[80%]">
-                <p class="text-slate-700">Hello, how can I help you today.</p>
+                <p class="text-slate-700">Hello, how can I help you today?</p>
             </div>
         </div>
     </div>
@@ -43,7 +43,7 @@
         <div class="max-w-4xl mx-auto flex gap-2">
             <input type="text" id="user-input" 
                 class="flex-1 bg-slate-100 border-none focus:ring-2 focus:ring-blue-500 rounded-xl px-4 py-3 outline-none" 
-                placeholder="Hỏi về quy định công ty..."
+                placeholder="Asking about company's policy..."
                 onkeypress="if(event.key === 'Enter') sendMessage()">
             <button onclick="sendMessage()" id="send-btn"
                 class="bg-blue-600 hover:bg-blue-700 text-white w-12 h-12 rounded-xl flex items-center justify-center transition-all">
@@ -62,7 +62,7 @@
             userId = 'user_' + Math.random().toString(36).substr(2, 9);
             localStorage.setItem('audit_user_id', userId);
         }
-        document.getElementById('display-user-id').innerText = `ID: ${userId}`;
+        // document.getElementById('display-user-id').innerText = `ID: ${userId}`;
 
         const chatBox = document.getElementById('chat-box');
         const userInput = document.getElementById('user-input');
@@ -92,7 +92,7 @@
                     const { answer, source_page, confidence_score } = data.response;
                     appendMessage('ai', answer, { page: source_page, score: confidence_score });
                 } else {
-                    appendMessage('ai', "Xin lỗi, đã có lỗi xảy ra khi xử lý dữ liệu.");
+                    appendMessage('ai', "Sorry, error when vetrieve data");
                 }
             } catch (error) {
                 removeLoadingIndicator(loadingId);
@@ -110,8 +110,8 @@
             if (metadata) {
                 metaHtml = `
                     <div class="mt-2 pt-2 border-t border-slate-100 flex gap-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        <span><i class="fas fa-file-lines mr-1"></i> Trang: ${metadata.page}</span>
-                        <span><i class="fas fa-check-double mr-1"></i> Độ tin cậy: ${(metadata.score * 100).toFixed(0)}%</span>
+                        <span><i class="fas fa-file-lines mr-1"></i> Pages: ${metadata.page}</span>
+                        <span><i class="fas fa-check-double mr-1"></i> Confidence score: ${(metadata.score * 100).toFixed(0)}%</span>
                     </div>
                 `;
             }
@@ -132,7 +132,7 @@
             const loader = document.createElement('div');
             loader.id = id;
             loader.className = 'flex justify-start message-appear';
-            loader.innerHTML = `<div class="bg-slate-200 px-4 py-2 rounded-full text-xs text-slate-500 animate-pulse">AI đang phân tích...</div>`;
+            loader.innerHTML = `<div class="bg-slate-200 px-4 py-2 rounded-full text-xs text-slate-500 animate-pulse">Thinking, please wait...</div>`;
             chatBox.appendChild(loader);
             chatBox.scrollTop = chatBox.scrollHeight;
             return id;
@@ -144,12 +144,12 @@
         }
 
         function resetChat() {
-            if(confirm("Bạn có muốn xóa lịch sử và bắt đầu phiên làm việc mới?")) {
+            if(confirm("Do you want to start a new session?")) {
                 chatBox.innerHTML = '';
                 userId = 'user_' + Math.random().toString(36).substr(2, 9);
                 localStorage.setItem('audit_user_id', userId);
-                document.getElementById('display-user-id').innerText = `ID: ${userId}`;
-                appendMessage('ai', "Đã reset phiên làm việc. Tôi có thể giúp gì cho bạn?");
+                // document.getElementById('display-user-id').innerText = `ID: ${userId}`;
+                appendMessage('ai', "Hello, how can I help you today?");
             }
         }
     </script>
