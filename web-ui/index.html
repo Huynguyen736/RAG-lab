@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Policy Auditor - Chat UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .chat-container { height: calc(100vh - 160px); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .message-appear { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <nav class="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center sticky top-0 z-10">
+        <div class="flex items-center gap-2">
+            <div class="bg-blue-600 p-2 rounded-lg text-white">
+                <i class="fas fa-shield-halved"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-slate-800 leading-none">Policy Auditor</h1>
+                <small class="text-slate-500" id="display-user-id">ID: Loading...</small>
+            </div>
+        </div>
+        <button onclick="resetChat()" class="text-slate-500 hover:text-red-500 transition-colors flex items-center gap-2 text-sm font-medium">
+            <i class="fas fa-rotate-right"></i> Reset Chat
+        </button>
+    </nav>
+
+    <div id="chat-box" class="chat-container max-w-4xl mx-auto p-4 overflow-y-auto space-y-4">
+        <div class="flex justify-start message-appear">
+            <div class="bg-white border p-4 rounded-2xl rounded-tl-none shadow-sm max-w-[80%]">
+                <p class="text-slate-700">Hello, how can I help you today.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t p-4">
+        <div class="max-w-4xl mx-auto flex gap-2">
+            <input type="text" id="user-input" 
+                class="flex-1 bg-slate-100 border-none focus:ring-2 focus:ring-blue-500 rounded-xl px-4 py-3 outline-none" 
+                placeholder="Hỏi về quy định công ty..."
+                onkeypress="if(event.key === 'Enter') sendMessage()">
+            <button onclick="sendMessage()" id="send-btn"
+                class="bg-blue-600 hover:bg-blue-700 text-white w-12 h-12 rounded-xl flex items-center justify-center transition-all">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- CẤU HÌNH ---
+        const LAMBDA_URL = "https://owbfisqofkc4iwrclpqbjfnyme0dumoz.lambda-url.ap-southeast-1.on.aws/chat"; // Dán API Gateway URL vào đây
+
+        // 1. Tự động cấp User ID (Lưu vào localStorage để duy trì phiên làm việc)
+        let userId = localStorage.getItem('audit_user_id');
+        if (!userId) {
+            userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('audit_user_id', userId);
+        }
+        document.getElementById('display-user-id').innerText = `ID: ${userId}`;
+
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+
+        // 2. Hàm gửi tin nhắn
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            // Hiển thị tin nhắn User
+            appendMessage('user', text);
+            userInput.value = '';
+            
+            // Hiển thị trạng thái Loading
+            const loadingId = addLoadingIndicator();
+
+            try {
+                const response = await fetch(`${LAMBDA_URL}?user_id=${userId}&message=${encodeURIComponent(text)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+                removeLoadingIndicator(loadingId);
+
+                if (data.response) {
+                    const { answer, source_page, confidence_score } = data.response;
+                    appendMessage('ai', answer, { page: source_page, score: confidence_score });
+                } else {
+                    appendMessage('ai', "Xin lỗi, đã có lỗi xảy ra khi xử lý dữ liệu.");
+                }
+            } catch (error) {
+                removeLoadingIndicator(loadingId);
+                appendMessage('ai', error);
+                console.error(error);
+            }
+        }
+
+        // 3. Hàm hiển thị tin nhắn lên UI
+        function appendMessage(role, text, metadata = null) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} message-appear mb-4`;
+            
+            let metaHtml = '';
+            if (metadata) {
+                metaHtml = `
+                    <div class="mt-2 pt-2 border-t border-slate-100 flex gap-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        <span><i class="fas fa-file-lines mr-1"></i> Trang: ${metadata.page}</span>
+                        <span><i class="fas fa-check-double mr-1"></i> Độ tin cậy: ${(metadata.score * 100).toFixed(0)}%</span>
+                    </div>
+                `;
+            }
+
+            wrapper.innerHTML = `
+                <div class="${role === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white border text-slate-700 rounded-tl-none'} p-4 rounded-2xl shadow-sm max-w-[85%]">
+                    <p class="text-sm leading-relaxed">${text}</p>
+                    ${metaHtml}
+                </div>
+            `;
+            chatBox.appendChild(wrapper);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // 4. Các hàm bổ trợ (Loading, Reset)
+        function addLoadingIndicator() {
+            const id = 'loading-' + Date.now();
+            const loader = document.createElement('div');
+            loader.id = id;
+            loader.className = 'flex justify-start message-appear';
+            loader.innerHTML = `<div class="bg-slate-200 px-4 py-2 rounded-full text-xs text-slate-500 animate-pulse">AI đang phân tích...</div>`;
+            chatBox.appendChild(loader);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return id;
+        }
+
+        function removeLoadingIndicator(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        function resetChat() {
+            if(confirm("Bạn có muốn xóa lịch sử và bắt đầu phiên làm việc mới?")) {
+                chatBox.innerHTML = '';
+                userId = 'user_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('audit_user_id', userId);
+                document.getElementById('display-user-id').innerText = `ID: ${userId}`;
+                appendMessage('ai', "Đã reset phiên làm việc. Tôi có thể giúp gì cho bạn?");
+            }
+        }
+    </script>
+</body>
+</html>
